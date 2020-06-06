@@ -4,102 +4,10 @@
 // #include "des_data.h"
 // #include "des_lookup.h"
 
-// ------------------------------------------------------------------------
-//----des_key.h-----
 
-#ifndef DES_KEY_H
-#define DES_KEY_H
+//#pragma GCC pop_options
 
-// Permuted Choice 1 Table [7*8]
-static const char PC1[] =
-{
-    57, 49, 41, 33, 25, 17,  9,
-     1, 58, 50, 42, 34, 26, 18,
-    10,  2, 59, 51, 43, 35, 27,
-    19, 11,  3, 60, 52, 44, 36,
-
-    63, 55, 47, 39, 31, 23, 15,
-     7, 62, 54, 46, 38, 30, 22,
-    14,  6, 61, 53, 45, 37, 29,
-    21, 13,  5, 28, 20, 12,  4
-};
-
-// Permuted Choice 2 Table [6*8]
-static const char PC2[] =
-{
-    14, 17, 11, 24,  1,  5,
-     3, 28, 15,  6, 21, 10,
-    23, 19, 12,  4, 26,  8,
-    16,  7, 27, 20, 13,  2,
-    41, 52, 31, 37, 47, 55,
-    30, 40, 51, 45, 33, 48,
-    44, 49, 39, 56, 34, 53,
-    46, 42, 50, 36, 29, 32
-};
-
-// Iteration Shift Array
-static const char ITERATION_SHIFT[] =
-{
-//  1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16
-    1,  1,  2,  2,  2,  2,  2,  2,  1,  2,  2,  2,  2,  2,  2,  1
-};
-
-#endif // DES_KEY_H
-
-// --------------------------------------------------------------------
-
-
-
-// ------------------------------------------------------------------------
-//--------des_data.h------------
-#ifndef DES_DATA_H
-#define DES_DATA_H
-
-#define LB32_MASK 0x00000001
-#define LB64_MASK 0x0000000000000001
-#define L64_MASK  0x00000000ffffffff
-
-// Initial Permutation Table [8*8]
-static const char IP[] =
-{
-    58, 50, 42, 34, 26, 18, 10, 2,
-    60, 52, 44, 36, 28, 20, 12, 4,
-    62, 54, 46, 38, 30, 22, 14, 6,
-    64, 56, 48, 40, 32, 24, 16, 8,
-    57, 49, 41, 33, 25, 17,  9, 1,
-    59, 51, 43, 35, 27, 19, 11, 3,
-    61, 53, 45, 37, 29, 21, 13, 5,
-    63, 55, 47, 39, 31, 23, 15, 7
-};
-
-// Inverse Initial Permutation Table [8*8]
-static const char FP[] =
-{
-    40, 8, 48, 16, 56, 24, 64, 32,
-    39, 7, 47, 15, 55, 23, 63, 31,
-    38, 6, 46, 14, 54, 22, 62, 30,
-    37, 5, 45, 13, 53, 21, 61, 29,
-    36, 4, 44, 12, 52, 20, 60, 28,
-    35, 3, 43, 11, 51, 19, 59, 27,
-    34, 2, 42, 10, 50, 18, 58, 26,
-    33, 1, 41,  9, 49, 17, 57, 25
-};
-
-// Expansion table [6*8]
-static const char EXPANSION[] =
-{
-    32,  1,  2,  3,  4,  5,
-     4,  5,  6,  7,  8,  9,
-     8,  9, 10, 11, 12, 13,
-    12, 13, 14, 15, 16, 17,
-    16, 17, 18, 19, 20, 21,
-    20, 21, 22, 23, 24, 25,
-    24, 25, 26, 27, 28, 29,
-    28, 29, 30, 31, 32,  1
-};
-
-// The S-Box tables [8*16*4]
-static const char SBOX[8][64] =
+const char SBOX_Faulty[8][64] =
 {
     {
         // S1
@@ -159,90 +67,28 @@ static const char SBOX[8][64] =
     }
 };
 
-// Post S-Box permutation [4*8]
-static const char PBOX[] =
+class DES_Faulty : public DES
 {
-    16,  7, 20, 21,
-    29, 12, 28, 17,
-     1, 15, 23, 26,
-     5, 18, 31, 10,
-     2,  8, 24, 14,
-    32, 27,  3,  9,
-    19, 13, 30,  6,
-    22, 11,  4, 25
+public:
+    DES_Faulty(ui64 key);
+    ui64 encrypt_Faulty(ui64 block);
+    ui64 des_Faulty(ui64 block, bool mode);
+
+protected:
+    ui32 f_Faulty(ui32 R, ui64 k);
 };
 
-#endif // DES_DATA_H
-// ------------------------------------------------------------------------
-
-
-
-//#pragma GCC push_options
-#pragma GCC optimize ("unroll-loops")
-
-DES::DES(ui64 key)
+DES_Faulty::DES_Faulty(ui64 key) : DES(key)
 {
-    keygen(key);
+//     keygen(key);
 }
 
-ui64 DES::encrypt(ui64 block)
+ui64 DES_Faulty::encrypt_Faulty(ui64 block)
 {
-    return des(block, false);
+    return des_Faulty(block, false);
 }
 
-ui64 DES::decrypt(ui64 block)
-{
-    return des(block, true);
-}
-
-ui64 DES::encrypt(ui64 block, ui64 key)
-{
-    DES des(key);
-    return des.des(block, false);
-}
-
-ui64 DES::decrypt(ui64 block, ui64 key)
-{
-    DES des(key);
-    return des.des(block, true);
-}
-
-void DES::keygen(ui64 key)
-{
-    // initial key schedule calculation
-    ui64 permuted_choice_1 = 0; // 56 bits
-    for (ui8 i = 0; i < 56; i++)
-    {
-        permuted_choice_1 <<= 1;
-        permuted_choice_1 |= (key >> (64-PC1[i])) & LB64_MASK;
-    }
-
-    // 28 bits
-    ui32 C = (ui32) ((permuted_choice_1 >> 28) & 0x000000000fffffff);
-    ui32 D = (ui32)  (permuted_choice_1 & 0x000000000fffffff);
-
-    // Calculation of the 16 keys
-    for (ui8 i = 0; i < 16; i++)
-    {
-        // key schedule, shifting Ci and Di
-        for (ui8 j = 0; j < ITERATION_SHIFT[i]; j++)
-        {
-            C = (0x0fffffff & (C << 1)) | (0x00000001 & (C >> 27));
-            D = (0x0fffffff & (D << 1)) | (0x00000001 & (D >> 27));
-        }
-
-        ui64 permuted_choice_2 = (((ui64) C) << 28) | (ui64) D;
-
-        sub_key[i] = 0; // 48 bits (2*24)
-        for (ui8 j = 0; j < 48; j++)
-        {
-            sub_key[i] <<= 1;
-            sub_key[i] |= (permuted_choice_2 >> (56-PC2[j])) & LB64_MASK;
-        }
-    }
-}
-
-ui64 DES::des(ui64 block, bool mode)
+ui64 DES_Faulty::des_Faulty(ui64 block, bool mode)
 {
     // applying initial permutation
     block = ip(block);
@@ -251,10 +97,13 @@ ui64 DES::des(ui64 block, bool mode)
     ui32 L = (ui32) (block >> 32) & L64_MASK;
     ui32 R = (ui32) (block & L64_MASK);
 
+    ui32 F;
     // 16 rounds
     for (ui8 i = 0; i < 16; i++)
     {
-        ui32 F = mode ? f(R, sub_key[15-i]) : f(R, sub_key[i]);
+        if(i!=15) F = mode ? f(R, sub_key[15-i]) : f(R, sub_key[i]);
+        else F = mode ? f_Faulty(R, sub_key[15-i]) : f_Faulty(R, sub_key[i]);
+        
         feistel(L, R, F);
     }
 
@@ -264,38 +113,7 @@ ui64 DES::des(ui64 block, bool mode)
     return fp(block);
 }
 
-ui64 DES::ip(ui64 block)
-{
-    // initial permutation
-    ui64 result = 0;
-    for (ui8 i = 0; i < 64; i++)
-    {
-        result <<= 1;
-        result |= (block >> (64-IP[i])) & LB64_MASK;
-    }
-    return result;
-}
-
-ui64 DES::fp(ui64 block)
-{
-    // inverse initial permutation
-    ui64 result = 0;
-    for (ui8 i = 0; i < 64; i++)
-    {
-        result <<= 1;
-        result |= (block >> (64-FP[i])) & LB64_MASK;
-    }
-    return result;
-}
-
-void DES::feistel(ui32 &L, ui32 &R, ui32 F)
-{
-    ui32 temp = R;
-    R = L ^ F;
-    L = temp;
-}
-
-ui32 DES::f(ui32 R, ui64 k) // f(R,k) function
+ui32 DES_Faulty::f_Faulty(ui32 R, ui64 k) // f(R,k) function
 {
     // applying expansion permutation and returning 48-bit data
     ui64 s_input = 0;
@@ -320,7 +138,7 @@ ui32 DES::f(ui32 R, ui64 k) // f(R,k) function
         char column = (char) ((s_input & (0x0000780000000000 >> 6*i)) >> (43-6*i));
 
         s_output <<= 4;
-        s_output |= (ui32) (SBOX[i][16*row + column] & 0x0f);
+        s_output |= (ui32) (SBOX_Faulty[i][16*row + column] & 0x0f);
     }
 
     // applying the round permutation
@@ -334,18 +152,19 @@ ui32 DES::f(ui32 R, ui64 k) // f(R,k) function
     return f_result;
 }
 
-//#pragma GCC pop_options
-
-
 
 int main(){
 
-    ui64 key = 0x0000000000000000;
+    ui64 key = 0x0000000000000011;
     ui64 input = 0x9474B8E8C73BCA7D;
     DES des(key);
 
     ui64 result = des.encrypt(input);
     std::cout<<"inp -  "<<input<<endl<<"res -  "<<result<<endl;
+
+    DES_Faulty des_f(key);
+    ui64 result_faulty = des_f.encrypt(input);
+    cout<<"res_Faulty -   "<<result_faulty<<endl;
 
     return 0;
 }
