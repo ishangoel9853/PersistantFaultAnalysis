@@ -5,7 +5,7 @@
 using namespace std;
 
 // ------------------------------------------------------------------------
-//----des_key.h-----
+//----KEY SCHEDULER UTILITIES-----
 // Permuted Choice 1 Table [7*8]
 static const char PC1[] =
 {
@@ -41,7 +41,7 @@ static const char ITERATION_SHIFT[] =
 
 
 // ------------------------------------------------------------------------
-//--------des_data.h------------
+//--------DES ENCRYPTION UTILITIES------------
 #define LB32_MASK 0x00000001
 #define LB64_MASK 0x0000000000000001
 #define L64_MASK  0x00000000ffffffff
@@ -72,7 +72,7 @@ static const char FP[] =
     33, 1, 41,  9, 49, 17, 57, 25
 };
 
-// Expansion table [6*8]
+// Expansion table for Expansion D-BOX in f [6*8]
 static const char EXPANSION[] =
 {
     32,  1,  2,  3,  4,  5,
@@ -85,7 +85,7 @@ static const char EXPANSION[] =
     28, 29, 30, 31, 32,  1
 };
 
-// The S-Box tables [8*16*4]
+// The S-Box tables in f [8*16*4]
 static const char SBOX[8][64] =
 {
     {
@@ -146,7 +146,7 @@ static const char SBOX[8][64] =
     }
 };
 
-// Post S-Box permutation [4*8]
+// Post S-Box permutation in f [4*8]
 static const char PBOX[] =
 {
     16,  7, 20, 21,
@@ -165,29 +165,29 @@ static const char PBOX[] =
 #define ui32 uint32_t
 #define ui8  uint8_t
 
+//Defining standart(Fault-less) DES class
 class DES
 {
 public:
-    DES(ui64 key);
-    ui64 des(ui64 block, bool mode);
+    DES(ui64 key);                                  // DES Constructor
+    ui64 des(ui64 block, bool mode);                //Driver function for DES Encryption (Mode: True-Decryption False-Encryption)
 
-    ui64 encrypt(ui64 block);
-    ui64 decrypt(ui64 block);
+    ui64 encrypt(ui64 block);                       // DES encryption function(encrypt block with object key)
+    ui64 decrypt(ui64 block);                       // DES decryption function(encrypt block with object key)
 
-    static ui64 encrypt(ui64 block, ui64 key);
-    static ui64 decrypt(ui64 block, ui64 key);
+    static ui64 encrypt(ui64 block, ui64 key);      // DES encryption function(encrypt block with provided "key")
+    static ui64 decrypt(ui64 block, ui64 key);      // DES decryption function(encrypt block with provided "key")
 
 protected:
-    void keygen(ui64 key);
+    void keygen(ui64 key);                          //DES key generation algorithm
 
-    ui64 ip(ui64 block);
-    ui64 fp(ui64 block);
+    ui64 ip(ui64 block);                            //Initial Permutation Function
+    ui64 fp(ui64 block);                            //Final Permutation Function
 
-    void feistel(ui32 &L, ui32 &R, ui32 F);
-    ui32 f(ui32 R, ui64 k);
+    void feistel(ui32 &L, ui32 &R, ui32 F);         //Basic Fiestel Round
+    ui32 f(ui32 R, ui64 k);                         //Function "f" 
 
-// private:
-    ui64 sub_key[16]; // 48 bits each
+    ui64 sub_key[16];                               //Round Keys generated from keygen algo (48 bits each)              
 };
 
 
@@ -224,19 +224,19 @@ ui64 DES::decrypt(ui64 block, ui64 key)
 
 void DES::keygen(ui64 key)
 {
-    // initial key schedule calculation
-    ui64 permuted_choice_1 = 0; // 56 bits
+    //Setting "permuted_choice_1" as the first 56 bits of the key "key"
+    ui64 permuted_choice_1 = 0; 
     for (ui8 i = 0; i < 56; i++)
     {
         permuted_choice_1 <<= 1;
         permuted_choice_1 |= (key >> (64-PC1[i])) & LB64_MASK;
     }
 
-    // 28 bits
+    // Splittong "permutation_choice_1 into two halves"
     ui32 C = (ui32) ((permuted_choice_1 >> 28) & 0x000000000fffffff);
     ui32 D = (ui32)  (permuted_choice_1 & 0x000000000fffffff);
 
-    // Calculation of the 16 keys
+    // Calculation of the 16 round keys
     for (ui8 i = 0; i < 16; i++)
     {
         // key schedule, shifting Ci and Di
@@ -248,7 +248,7 @@ void DES::keygen(ui64 key)
 
         ui64 permuted_choice_2 = (((ui64) C) << 28) | (ui64) D;
 
-        sub_key[i] = 0; // 48 bits (2*24)
+        sub_key[i] = 0;                     // 48 bits (2*24)
         for (ui8 j = 0; j < 48; j++)
         {
             sub_key[i] <<= 1;
@@ -257,31 +257,31 @@ void DES::keygen(ui64 key)
     }
 }
 
-ui64 DES::des(ui64 block, bool mode)
+ui64 DES::des(ui64 block, bool mode)    //Mode:: True-Decryption, False-Encryption
 {
-    // applying initial permutation
+    // Applying initial permutation
     block = ip(block);
 
-    // dividing T' into two 32-bit parts
+    // dividing "block" into two 32-bit parts
     ui32 L = (ui32) (block >> 32) & L64_MASK;
     ui32 R = (ui32) (block & L64_MASK);
 
-    // 16 rounds
+    // 16 round Encryption
     for (ui8 i = 0; i < 16; i++)
     {
         ui32 F = mode ? f(R, sub_key[15-i]) : f(R, sub_key[i]);
         feistel(L, R, F);
     }
 
-    // swapping the two parts
+    // Swapping L & R
     block = (((ui64) R) << 32) | (ui64) L;
-    // applying final permutation
+    // Applying final permutation
     return fp(block);
 }
 
 ui64 DES::ip(ui64 block)
 {
-    // initial permutation
+    // Initial permutation
     ui64 result = 0;
     for (ui8 i = 0; i < 64; i++)
     {
@@ -293,7 +293,7 @@ ui64 DES::ip(ui64 block)
 
 ui64 DES::fp(ui64 block)
 {
-    // inverse initial permutation
+    // Final permutation
     ui64 result = 0;
     for (ui8 i = 0; i < 64; i++)
     {
@@ -312,7 +312,7 @@ void DES::feistel(ui32 &L, ui32 &R, ui32 F)
 
 ui32 DES::f(ui32 R, ui64 k) // f(R,k) function
 {
-    // applying expansion permutation and returning 48-bit data
+    // applying expansion permutation to convert R to 48-bits
     ui64 s_input = 0;
     for (ui8 i = 0; i < 48; i++)
     {
@@ -320,10 +320,10 @@ ui32 DES::f(ui32 R, ui64 k) // f(R,k) function
         s_input |= (ui64) ((R >> (32-EXPANSION[i])) & LB32_MASK);
     }
 
-    // XORing expanded Ri with Ki, the round key
+    // XORing expanded Ri with Ki(round key)
     s_input = s_input ^ k;
 
-    // applying S-Boxes function and returning 32-bit data
+    // Applying S-Boxes function and returning 32-bit data
     ui32 s_output = 0;
     for (ui8 i = 0; i < 8; i++)
     {
@@ -338,7 +338,7 @@ ui32 DES::f(ui32 R, ui64 k) // f(R,k) function
         s_output |= (ui32) (SBOX[i][16*row + column] & 0x0f);
     }
 
-    // applying the round permutation
+    // Round permutation
     ui32 f_result = 0;
     for (ui8 i = 0; i < 32; i++)
     {
@@ -351,4 +351,4 @@ ui32 DES::f(ui32 R, ui64 k) // f(R,k) function
 //-----------------------------------------------------------------------
 
 
-#endif // DES_H
+#endif 

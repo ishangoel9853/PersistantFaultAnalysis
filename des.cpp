@@ -80,7 +80,6 @@ protected:
 
 DES_Faulty::DES_Faulty(ui64 key) : DES(key)
 {
-//     keygen(key);
 }
 
 ui64 DES_Faulty::encrypt_Faulty(ui64 block)
@@ -90,15 +89,15 @@ ui64 DES_Faulty::encrypt_Faulty(ui64 block)
 
 ui64 DES_Faulty::des_Faulty(ui64 block, bool mode)
 {
-    // applying initial permutation
+    // Applying initial permutation
     block = ip(block);
 
-    // dividing T' into two 32-bit parts
+    // Splitting "block" into two 32-bit parts
     ui32 L = (ui32) (block >> 32) & L64_MASK;
     ui32 R = (ui32) (block & L64_MASK);
 
     ui32 F;
-    // 16 rounds
+    // 16 round Encryption
     for (ui8 i = 0; i < 16; i++)
     {
         if(i!=15) F = mode ? f(R, sub_key[15-i]) : f(R, sub_key[i]);
@@ -107,15 +106,15 @@ ui64 DES_Faulty::des_Faulty(ui64 block, bool mode)
         feistel(L, R, F);
     }
 
-    // swapping the two parts
+    // Swapping L & R
     block = (((ui64) R) << 32) | (ui64) L;
-    // applying final permutation
+    // Applying final permutation
     return fp(block);
 }
 
 ui32 DES_Faulty::f_Faulty(ui32 R, ui64 k) // f(R,k) function
 {
-    // applying expansion permutation and returning 48-bit data
+    // applying expansion permutation to convert R to 48-bits
     ui64 s_input = 0;
     for (ui8 i = 0; i < 48; i++)
     {
@@ -123,10 +122,10 @@ ui32 DES_Faulty::f_Faulty(ui32 R, ui64 k) // f(R,k) function
         s_input |= (ui64) ((R >> (32-EXPANSION[i])) & LB32_MASK);
     }
 
-    // XORing expanded Ri with Ki, the round key
+    // XORing expanded Ri with Ki(round key)
     s_input = s_input ^ k;
 
-    // applying S-Boxes function and returning 32-bit data
+    // Applying S-Boxes function and returning 32-bit data
     ui32 s_output = 0;
     for (ui8 i = 0; i < 8; i++)
     {
@@ -138,10 +137,10 @@ ui32 DES_Faulty::f_Faulty(ui32 R, ui64 k) // f(R,k) function
         char column = (char) ((s_input & (0x0000780000000000 >> 6*i)) >> (43-6*i));
 
         s_output <<= 4;
-        s_output |= (ui32) (SBOX_Faulty[i][16*row + column] & 0x0f);
+        s_output |= (ui32) (SBOX_Faulty[i][16*row + column] & 0x0f);                //Using Fault injected S-Boxes
     }
 
-    // applying the round permutation
+    // Round permutation
     ui32 f_result = 0;
     for (ui8 i = 0; i < 32; i++)
     {
