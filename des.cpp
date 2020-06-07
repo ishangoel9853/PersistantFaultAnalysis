@@ -149,7 +149,7 @@ void attack(ui64 inputs[N], ui8 mask, ui64 analysis[8][N])
     ui64 recovered_key = 0x0000000000000000;
 
     ui8 key_pos = 0x00; // Recovered key positions 6 bits at a time
-    ui8 L8_MASK = 0x01;
+    ui8 L8_MASK = 0x80;
 
     // Persistent Fault Analysis
     for (int i = 0; i < N; i++)
@@ -182,20 +182,25 @@ void attack(ui64 inputs[N], ui8 mask, ui64 analysis[8][N])
         }
 
         ui32 d_b = before_fp & L64_MASK;
-        ui64 KEY_MASK = 0x000000000000003f;
-        ui32 B_MASK = 0x0000000f;
+        ui64 KEY_MASK = 0xfc00000000000000;
+        ui32 B_MASK = 0xf0000000;
         for (int j = 0; j < 8; j += 1)
         {
             if (!(key_pos ^ mask))
+            {
                 break;
-            if ((d_b & (B_MASK << (j * 4))) && !(key_pos & (L8_MASK << j)) && (mask & (1 << j)))
+            }
+            if ((d_b & (B_MASK >> (j * 4))) && !(key_pos & (L8_MASK >> j)) && (mask & (1 << (7 - j))))
             {
                 analysis[j][i] = 1;
-                recovered_key |= (KEY_MASK << j) & (a1 ^ v);
-                key_pos |= (L8_MASK << j);
+                recovered_key |= (KEY_MASK >> (j * 6)) & (a1 ^ v);
+                key_pos |= (L8_MASK >> j);
                 continue;
             }
-            analysis[j][i]--;
+            if (mask & (1 << (7 - j)))
+            {
+                analysis[j][i]--;
+            }
         }
     }
 
@@ -211,10 +216,11 @@ int main()
     ui64 anal_avg_single[8][N];
     ui64 anal_avg_multi[8][N];
     for (int i = 0; i < 8; i++)
-            for (int j = 0; j < N; j++) {
-                anal_avg_multi[i][j] = 0;
-                anal_avg_single[i][j] = 0;
-            }
+        for (int j = 0; j < N; j++)
+        {
+            anal_avg_multi[i][j] = 0;
+            anal_avg_single[i][j] = 0;
+        }
     for (int a = 0; a < NA; a++)
     {
         ui64 inputs[N];
@@ -245,14 +251,14 @@ int main()
             for (int m = 0; m < N; m++)
                 anal_avg_multi[l][m] += analysis[l][m];
     }
-    
+
     for (int l = 0; l < 8; l++)
         for (int m = 0; m < N; m++)
         {
             anal_avg_single[l][m] /= NA;
             anal_avg_multi[l][m] /= NA;
         }
-    
+
     ofstream out1("Single.csv");
     for (auto &row : anal_avg_single)
     {
@@ -261,7 +267,7 @@ int main()
         out1 << '\n';
     }
 
-    ofstream out2("Multi.csv");  // Multpily 8 keyspaces for a graph
+    ofstream out2("Multi.csv"); // Multpily 8 keyspaces for a graph
     for (auto &row : anal_avg_multi)
     {
         for (auto col : row)
