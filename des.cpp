@@ -6,7 +6,7 @@
 
 //#pragma GCC pop_options
 
-#define N 10
+#define N 100
 
 ui64 v = 0x0000000000000000; // 48 bit representation of faulty indices in 8 S-Boxes.
 ui8 V_MASK = 0x80;
@@ -224,6 +224,10 @@ int main()
     for (int a = 0; a < NA; a++)
     {
         ui64 inputs[N];
+        for(int i = 0;i < N;i++) {
+            inputs[i] = rand() % 100 + 1;
+        }
+
         ui64 analysis[8][N];
 
         // For all possible single faults
