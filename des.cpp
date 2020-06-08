@@ -13,40 +13,40 @@ ui8 L8_MASK = 0x80;
 char SBOX_Faulty[8][64] =
     {
         {// S1
-         14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7,
-         0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8,
-         4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0,
-         15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13},
+         13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7,
+         1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2,
+         7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8,
+         2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11},
         {// S2
-         15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10,
-         3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5,
-         0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15,
-         13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9},
+         13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7,
+         1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2,
+         7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8,
+         2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11},
         {// S3
-         10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8,
-         13, 7, 0, 9, 3, 4, 6, 10, 2, 8, 5, 14, 12, 11, 15, 1,
-         13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7,
-         1, 10, 13, 0, 6, 9, 8, 7, 4, 15, 14, 3, 11, 5, 2, 12},
+         13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7,
+         1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2,
+         7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8,
+         2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11},
         {// S4
-         7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15,
-         13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2, 12, 1, 10, 14, 9,
-         10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4,
-         3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11, 12, 7, 2, 14},
+         13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7,
+         1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2,
+         7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8,
+         2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11},
         {// S5
-         2, 12, 4, 1, 7, 10, 11, 6, 8, 5, 3, 15, 13, 0, 14, 9,
-         14, 11, 2, 12, 4, 7, 13, 1, 5, 0, 15, 10, 3, 9, 8, 6,
-         4, 2, 1, 11, 10, 13, 7, 8, 15, 9, 12, 5, 6, 3, 0, 14,
-         11, 8, 12, 7, 1, 14, 2, 13, 6, 15, 0, 9, 10, 4, 5, 3},
+         13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7,
+         1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2,
+         7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8,
+         2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11},
         {// S6
-         12, 1, 10, 15, 9, 2, 6, 8, 0, 13, 3, 4, 14, 7, 5, 11,
-         10, 15, 4, 2, 7, 12, 9, 5, 6, 1, 13, 14, 0, 11, 3, 8,
-         9, 14, 15, 5, 2, 8, 12, 3, 7, 0, 4, 10, 1, 13, 11, 6,
-         4, 3, 2, 12, 9, 5, 15, 10, 11, 14, 1, 7, 6, 0, 8, 13},
+         13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7,
+         1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2,
+         7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8,
+         2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11},
         {// S7
-         4, 11, 2, 14, 15, 0, 8, 13, 3, 12, 9, 7, 5, 10, 6, 1,
-         13, 0, 11, 7, 4, 9, 1, 10, 14, 3, 5, 12, 2, 15, 8, 6,
-         1, 4, 11, 13, 12, 3, 7, 14, 10, 15, 6, 8, 0, 5, 9, 2,
-         6, 11, 13, 8, 1, 4, 10, 7, 9, 5, 0, 15, 14, 2, 3, 12},
+         13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7,
+         1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2,
+         7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8,
+         2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11},
         {// S8
          13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7,
          1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2,
@@ -218,81 +218,93 @@ void attack(ui64 inputs[N], ui8 mask, int analysis[8][N])
 
 int main()
 {
-    int NA = 1; // Number of attacks
-    ui64 anal_avg_single[8][N];
-    ui64 anal_avg_multi[8][N];
-    for (int i = 0; i < 8; i++)
-        for (int j = 0; j < N; j++)
-        {
-            anal_avg_multi[i][j] = 0;
-            anal_avg_single[i][j] = 0;
-        }
-    for (int a = 0; a < NA; a++)
-    {
-        srand(time(0));
-        ui64 inputs[N];
-        for (int i = 0; i < N; i++)
-        {
-            inputs[i] = rand() % 18446744073709551615 + 1;
-        }
+    // int NA = 1; // Number of attacks
+    // ui64 anal_avg_single[8][N];
+    // ui64 anal_avg_multi[8][N];
+    // for (int i = 0; i < 8; i++)
+    //     for (int j = 0; j < N; j++)
+    //     {
+    //         anal_avg_multi[i][j] = 0;
+    //         anal_avg_single[i][j] = 0;
+    //     }
+    // for (int a = 0; a < NA; a++)
+    // {
+    //     srand(time(0));
+    //     ui64 inputs[N];
+    //     for (int i = 0; i < N; i++)
+    //     {
+    //         inputs[i] = rand() % 18446744073709551615 + 1;
+    //     }
 
-        int analysis[8][N];
+    //     int analysis[8][N];
 
-        // For all possible single faults
-        for (int i = 0; i < 8; i++)
-            for (int j = 0; j < N; j++)
-                analysis[i][j] = 64;
-        // Iterate through single faults in each S-Box
-        for (int i = 0; i < 1; i++)
-        {
-            int i_t = rand() % 64;
-            int t = rand() % 5 + 1;
-            SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] + t) % 16;
-            v = i_t << (63 - (i * 8));
-            attack(inputs, L8_MASK >> i, analysis);
-            SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] - t) % 16;
-        }
-        v = 0;
-        for (int l = 0; l < 8; l++)
-            for (int m = 0; m < N; m++)
-                anal_avg_single[l][m] += analysis[l][m];
+    //     // For all possible single faults
+    //     for (int i = 0; i < 8; i++)
+    //         for (int j = 0; j < N; j++)
+    //             analysis[i][j] = 64;
+    //     // Iterate through single faults in each S-Box
+    //     for (int i = 0; i < 1; i++)
+    //     {
+    //         int i_t = rand() % 64;
+    //         int t = rand() % 5 + 1;
+    //         SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] + t) % 16;
+    //         v = i_t << (63 - (i * 8));
+    //         attack(inputs, L8_MASK >> i, analysis);
+    //         SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] - t) % 16;
+    //     }
+    //     v = 0;
+    //     for (int l = 0; l < 8; l++)
+    //         for (int m = 0; m < N; m++)
+    //             anal_avg_single[l][m] += analysis[l][m];
 
-        // For multiple faults
-        // for (int i = 0; i < 8; i++)
-        // {
-        //     int i_t = rand() % 64;
-        //     int t = rand() % 5 + 1;
-        //     SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] + t) % 16;
-        //     for (int j = 0; j < N; j++)
-        //         analysis[i][j] = 64;
-        // }
-        // attack(inputs, 0xff, analysis);
-        // for (int l = 0; l < 8; l++)
-        //     for (int m = 0; m < N; m++)
-        //         anal_avg_multi[l][m] += analysis[l][m];
-    }
+    //     // For multiple faults
+    //     // for (int i = 0; i < 8; i++)
+    //     // {
+    //     //     int i_t = rand() % 64;
+    //     //     int t = rand() % 5 + 1;
+    //     //     SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] + t) % 16;
+    //     //     for (int j = 0; j < N; j++)
+    //     //         analysis[i][j] = 64;
+    //     // }
+    //     // attack(inputs, 0xff, analysis);
+    //     // for (int l = 0; l < 8; l++)
+    //     //     for (int m = 0; m < N; m++)
+    //     //         anal_avg_multi[l][m] += analysis[l][m];
+    // }
 
-    for (int l = 0; l < 8; l++)
-        for (int m = 0; m < N; m++)
-        {
-            anal_avg_single[l][m] /= NA;
-            anal_avg_multi[l][m] /= NA;
-        }
+    // for (int l = 0; l < 8; l++)
+    //     for (int m = 0; m < N; m++)
+    //     {
+    //         anal_avg_single[l][m] /= NA;
+    //         anal_avg_multi[l][m] /= NA;
+    //     }
 
-    ofstream out1("Single.csv");
-    for (auto &row : anal_avg_single)
-    {
-        for (auto col : row)
-            out1 << col << ',';
-        out1 << '\n';
-    }
+    // ofstream out1("Single.csv");
+    // for (auto &row : anal_avg_single)
+    // {
+    //     for (auto col : row)
+    //         out1 << col << ',';
+    //     out1 << '\n';
+    // }
 
-    ofstream out2("Multi.csv"); // Multiply 8 keyspaces for a graph
-    for (auto &row : anal_avg_multi)
-    {
-        for (auto col : row)
-            out2 << col << ',';
-        out2 << '\n';
-    }
+    // ofstream out2("Multi.csv"); // Multiply 8 keyspaces for a graph
+    // for (auto &row : anal_avg_multi)
+    // {
+    //     for (auto col : row)
+    //         out2 << col << ',';
+    //     out2 << '\n';
+    // }
+    
+    ui64 input  = 0x9474B8E8C73BCA7D;
+    ui64 key  = 0x1111111111111111;
+    DES des(key);
+    ui64 res = des.encrypt(input);
+    cout<<"INPUT:  "<<input<<endl;
+    cout<<"RESULT:  "<<res<<endl;
+    DES_Faulty des_f(key);
+    ui64 res_f = des_f.encrypt_Faulty(input);
+    cout<<"RESULT_Faulty:  "<<res_f<<endl;
+
+
     return 0;
 }
