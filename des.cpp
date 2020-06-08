@@ -6,10 +6,14 @@
 
 //#pragma GCC pop_options
 
-#define N 100
+// Number of inputs
+#define N 1000
+// Number of attacks
+#define NA 1000
 
 ui64 v = 0x0000000000000000; // 48 bit representation of faulty indices in 8 S-Boxes.
 ui8 L8_MASK = 0x80;
+
 char SBOX_Faulty[8][64] =
     {
         {// S1
@@ -139,40 +143,47 @@ ui32 DES_Faulty::f_Faulty(ui32 R, ui64 k) // f(R,k) function
     return f_result;
 }
 
-void attack(ui64 inputs[N], ui8 mask, int analysis[8][N])
+// THE 56 BIT KEY
+ui64 key = 0x00f981c293aa6b0d;
+
+DES des(key);
+DES_Faulty des_f(key);
+
+int printBinary(ui64 n)
 {
-    ui64 key = 0x00f981c293aa6b0d;
+    for (int i = 0; i < 64; i++)
+    {
+        cout << ((n >> (63 - i)) & 1);
+    }
+    cout << endl;
+    return 0;
+}
 
-    DES des(key);
-    DES_Faulty des_f(key);
-
+int attack(ui64 inputs[N], ui8 mask, int analysis[8][N])
+{
     ui64 recovered_key = 0x0000000000000000;
 
     ui8 key_pos = 0x00; // Recovered key positions 6 bits at a time
     vector<ui64> keyspace[8];
-
+    int n;
     // Persistent Fault Analysis
     for (int i = 0; i < N; i++)
     {
         ui64 result = des.encrypt(inputs[i]);
-        ui64 result_faulty = des_f.encrypt(inputs[i]);
-        cout << "Input:   " << inputs[i] << endl;
-        cout << "Correct: " << result << endl;
-        cout << "Faulty:  " << result_faulty << endl;
+        ui64 result_faulty = des_f.encrypt_Faulty(inputs[i]);
 
-        if (result_faulty != result)
-            cout << "---------------------------------Hit the spot---------------------------------" << endl;
-        ui64 d_r = result ^ result_faulty;
-
-        // Reverse final permutation for d_r
+        // Reverse final permutation for ciphertexts
+        ui64 before_fp_f = 0;
         ui64 before_fp = 0;
         for (ui8 i = 0; i < 64; i++)
         {
             before_fp <<= 1;
-            before_fp |= (d_r >> (64 - IP[i])) & LB64_MASK;
+            before_fp_f <<= 1;
+            before_fp |= (result >> (64 - IP[i])) & LB64_MASK;
+            before_fp_f |= (result_faulty >> (64 - IP[i])) & LB64_MASK;
         }
 
-        ui32 a = before_fp >> 32;
+        ui32 a = before_fp & L64_MASK;
         // Applying expansion permutation to convert a to 48-bits
         ui64 a1 = 0;
         for (ui8 i = 0; i < 48; i++)
@@ -181,29 +192,46 @@ void attack(ui64 inputs[N], ui8 mask, int analysis[8][N])
             a1 |= (ui64)((a >> (32 - EXPANSION[i])) & LB32_MASK);
         }
 
-        ui32 d_b = before_fp & L64_MASK;
-        ui64 KEY_MASK = 0xfc00000000000000;
+        ui32 d_b1 = (before_fp ^ before_fp_f) >> 32;
+        static const char PBOXI[] =
+            {
+                9, 17, 23, 31,
+                13, 28, 2, 18,
+                24, 16, 30, 6,
+                26, 20, 10, 1,
+                8, 14, 25, 3,
+                4, 29, 11, 19,
+                32, 12, 22, 7,
+                5, 27, 15, 21};
+        // Reverse f straight d-box permutation
+        ui32 d_b = 0;
+        for (ui8 i = 0; i < 32; i++)
+        {
+            d_b <<= 1;
+            d_b |= (d_b1 >> (32 - PBOXI[i])) & LB32_MASK;
+        }
+        ui64 KEY_MASK = 0x0000fc0000000000;
         ui32 B_MASK = 0xf0000000;
         for (int j = 0; j < 8; j += 1)
         {
-            if (!(key_pos ^ mask))
-            {
-                break;
-            }
             if ((d_b & (B_MASK >> (j * 4))) && !(key_pos & (L8_MASK >> j)) && (mask & (L8_MASK >> j)))
             {
                 analysis[j][i] = 1;
                 recovered_key |= (KEY_MASK >> (j * 6)) & (a1 ^ v);
                 key_pos |= (L8_MASK >> j);
-                cout << "-----------------------------------------HIT-----------------------------------------" << endl;
+                n = i;
                 continue;
             }
             if (mask & (L8_MASK >> j))
             {
+                if (analysis[j][((i == 0) ? 0 : (i - 1))] == 1)
+                {
+                    analysis[j][i] = 1;
+                    continue;
+                }
                 if (find(keyspace[j].begin(), keyspace[j].end(), (KEY_MASK >> (j * 6)) & (a1 ^ v)) == keyspace[j].end())
                 {
                     keyspace[j].push_back((KEY_MASK >> (j * 6)) & (a1 ^ v));
-                    // analysis[j][i] = max(analysis[j][((i == 0) ? 0 : (i - 1))] - 1, 0);
                 }
                 analysis[j][i] = 64 - keyspace[j].size();
             }
@@ -213,12 +241,13 @@ void attack(ui64 inputs[N], ui8 mask, int analysis[8][N])
     if (key_pos ^ mask)
         cout << "The full key has not been recovered. Please add more ciphertexts." << endl;
 
-    cout << "The recovered key is " << recovered_key << endl;
+    cout << "Recovered key = ";
+    printBinary(recovered_key);
+    return n;
 }
 
 int main()
 {
-    int NA = 1; // Number of attacks
     ui64 anal_avg_single[8][N];
     ui64 anal_avg_multi[8][N];
     for (int i = 0; i < 8; i++)
@@ -227,8 +256,13 @@ int main()
             anal_avg_multi[i][j] = 0;
             anal_avg_single[i][j] = 0;
         }
+    // Number of inputs for successful hits
+    int n_s[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    int n_m = 0;
     for (int a = 0; a < NA; a++)
     {
+        cout << "\n\n************************************ ATTACK " << a + 1 << " ************************************\n\n"
+             << endl;
         srand(time(0));
         ui64 inputs[N];
         for (int i = 0; i < N; i++)
@@ -239,17 +273,19 @@ int main()
         int analysis[8][N];
 
         // For all possible single faults
+        cout << "Single Faults--------------------------------------------------------------------" << endl;
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < N; j++)
                 analysis[i][j] = 64;
         // Iterate through single faults in each S-Box
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < 8; i++)
         {
+            cout << "SBOX " << i + 1 << ":" << endl;
             int i_t = rand() % 64;
             int t = rand() % 5 + 1;
             SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] + t) % 16;
             v = i_t << (63 - (i * 8));
-            attack(inputs, L8_MASK >> i, analysis);
+            n_s[i] += attack(inputs, L8_MASK >> i, analysis);
             SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] - t) % 16;
         }
         v = 0;
@@ -258,26 +294,31 @@ int main()
                 anal_avg_single[l][m] += analysis[l][m];
 
         // For multiple faults
-        // for (int i = 0; i < 8; i++)
-        // {
-        //     int i_t = rand() % 64;
-        //     int t = rand() % 5 + 1;
-        //     SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] + t) % 16;
-        //     for (int j = 0; j < N; j++)
-        //         analysis[i][j] = 64;
-        // }
-        // attack(inputs, 0xff, analysis);
-        // for (int l = 0; l < 8; l++)
-        //     for (int m = 0; m < N; m++)
-        //         anal_avg_multi[l][m] += analysis[l][m];
+        cout << "Multiple Faults------------------------------------------------------------------" << endl;
+        for (int i = 0; i < 8; i++)
+        {
+            int i_t = rand() % 64;
+            int t = rand() % 5 + 1;
+            SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] + t) % 16;
+            for (int j = 0; j < N; j++)
+                analysis[i][j] = 64;
+        }
+        n_m += attack(inputs, 0xff, analysis);
+        for (int l = 0; l < 8; l++)
+            for (int m = 0; m < N; m++)
+                anal_avg_multi[l][m] += analysis[l][m];
     }
 
     for (int l = 0; l < 8; l++)
+    {
+        n_s[l] /= NA;
         for (int m = 0; m < N; m++)
         {
             anal_avg_single[l][m] /= NA;
             anal_avg_multi[l][m] /= NA;
         }
+    }
+    n_m /= NA;
 
     ofstream out1("Single.csv");
     for (auto &row : anal_avg_single)
@@ -287,12 +328,19 @@ int main()
         out1 << '\n';
     }
 
-    ofstream out2("Multi.csv"); // Multiply 8 keyspaces for a graph
-    for (auto &row : anal_avg_multi)
+    ofstream out2("Multi.csv");
+    for (int i = 0; i < N; i++)
     {
-        for (auto col : row)
-            out2 << col << ',';
-        out2 << '\n';
+        ui64 t = 1;
+        for (int j = 0; j < 8; j++)
+            t *= anal_avg_multi[j][i];
+        out2 << t << ',';
     }
+
+    cout << "\n\nFor single faults, number of inputs required: " << endl;
+    for (int i = 0; i < 8; i++)
+        cout << "SBOX " << i + 1 << ": " << n_s[i] << endl;
+    cout << "For multiple faults, number of inputs required: " << n_m << endl;
+
     return 0;
 }
