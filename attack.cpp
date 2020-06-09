@@ -1,17 +1,24 @@
 #include "des.h"
 #include <bits/stdc++.h>
+#include <random>
 // #include "des_key.h"
 // #include "des_data.h"
 // #include "des_lookup.h"
 
 //#pragma GCC pop_options
 
-// Number of inputs
-#define N 1000
-// Number of attacks
-#define NA 1000
+// Library Used to Generate Randon Numbers With a Uniform Distribuation
+#define WORD_MASK (0xffffffffffffffffull) // 64 Bit Word Mask
+std::mt19937 rng;
+std::uniform_int_distribution<uint64_t> uni_dist(0x0ull, WORD_MASK);
 
-ui64 v = 0x0000000000000000; // 48 bit representation of faulty indices in 8 S-Boxes.
+
+// Number of inputs
+#define N 500
+// Number of attacks
+#define NA 100
+
+ui64 v = 0x0000000000000000ull; // 48 bit representation of faulty indices in 8 S-Boxes.
 ui8 L8_MASK = 0x80;
 
 char SBOX_Faulty[8][64] =
@@ -63,6 +70,7 @@ public:
     DES_Faulty(ui64 key);
     ui64 encrypt_Faulty(ui64 block);
     ui64 des_Faulty(ui64 block, bool mode);
+    ui64 last_subkey();
 
 protected:
     ui32 f_Faulty(ui32 R, ui64 k);
@@ -70,6 +78,11 @@ protected:
 
 DES_Faulty::DES_Faulty(ui64 key) : DES(key)
 {
+}
+
+ui64 DES_Faulty::last_subkey()
+{
+    return sub_key[15];
 }
 
 ui64 DES_Faulty::encrypt_Faulty(ui64 block)
@@ -143,11 +156,6 @@ ui32 DES_Faulty::f_Faulty(ui32 R, ui64 k) // f(R,k) function
     return f_result;
 }
 
-// THE 56 BIT KEY
-ui64 key = 0x00f981c293aa6b0d;
-
-DES des(key);
-DES_Faulty des_f(key);
 
 int printBinary(ui64 n)
 {
@@ -159,7 +167,7 @@ int printBinary(ui64 n)
     return 0;
 }
 
-int attack(ui64 inputs[N], ui8 mask, int analysis[8][N])
+int attack(DES des, DES_Faulty des_f, ui64 inputs[N], ui8 mask, int analysis[8][N])
 {
     ui64 recovered_key = 0x0000000000000000;
 
@@ -248,30 +256,51 @@ int attack(ui64 inputs[N], ui8 mask, int analysis[8][N])
 
 int main()
 {
+    // The Average Key space left after the queries
     ui64 anal_avg_single[8][N];
     ui64 anal_avg_multi[8][N];
+    
+    // Number of query at which we get the successful hit
+    ui64 n_s[8][N];
+    ui64 n_m[N];
+
     for (int i = 0; i < 8; i++)
         for (int j = 0; j < N; j++)
         {
             anal_avg_multi[i][j] = 0;
             anal_avg_single[i][j] = 0;
+            n_s[i][j] = 0;
+            n_m[j] = 0;
         }
-    // Number of inputs for successful hits
-    int n_s[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    int n_m = 0;
+
+
     for (int a = 0; a < NA; a++)
     {
+        // THE 56 BIT KEY
+        ui64 key = uni_dist(rng) & 0xffffffffffffffull;
+        DES des(key);
+        DES_Faulty des_f(key);
+        // Reset All Faulty SBOX
+        for (int i=0;i<8;i++)
+        {
+            for(int j=0;j<64;j++)
+            {
+                SBOX_Faulty[i][j] = SBOX[i][j];
+            }
+        }
+
         cout << "\n\n************************************ ATTACK " << a + 1 << " ************************************\n\n"
              << endl;
-        srand(time(0));
         ui64 inputs[N];
         for (int i = 0; i < N; i++)
         {
-            inputs[i] = rand() % 18446744073709551615 + 1;
+            inputs[i] = uni_dist(rng);
         }
 
         int analysis[8][N];
 
+        cout<<"Key:";
+        printBinary(des_f.last_subkey());
         // For all possible single faults
         cout << "Single Faults--------------------------------------------------------------------" << endl;
         for (int i = 0; i < 8; i++)
@@ -281,66 +310,114 @@ int main()
         for (int i = 0; i < 8; i++)
         {
             cout << "SBOX " << i + 1 << ":" << endl;
-            int i_t = rand() % 64;
-            int t = rand() % 5 + 1;
-            SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] + t) % 16;
-            v = i_t << (63 - (i * 8));
-            n_s[i] += attack(inputs, L8_MASK >> i, analysis);
-            SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] - t) % 16;
+            int i_t = uni_dist(rng) % 64;
+            int t = uni_dist(rng) % 5 + 1;
+
+            char row = (char)((i_t & 0x20) >> 4) | (i_t & 0x01);
+            char column = (char)((i_t & 0x1e) >> 1);
+            int index = 16 * row + column;
+            SBOX_Faulty[i][index] = (SBOX_Faulty[i][index] + t) % 16;
+            
+            v = ((ui64)i_t) << (48 - ((i+1) * 6));
+            
+            ui64 q_no = attack(des, des_f, inputs, L8_MASK >> i, analysis);
+            n_s[i][q_no]++;
+
+            SBOX_Faulty[i][index] = (SBOX_Faulty[i][index] - t + 16) % 16;
         }
-        v = 0;
         for (int l = 0; l < 8; l++)
             for (int m = 0; m < N; m++)
                 anal_avg_single[l][m] += analysis[l][m];
 
         // For multiple faults
+        v = 0;
         cout << "Multiple Faults------------------------------------------------------------------" << endl;
         for (int i = 0; i < 8; i++)
         {
-            int i_t = rand() % 64;
-            int t = rand() % 5 + 1;
-            SBOX_Faulty[i][i_t] = (SBOX_Faulty[i][i_t] + t) % 16;
+            int i_t = uni_dist(rng) % 64;
+            i_t = 63;
+            int t = uni_dist(rng) % 5 + 1;
+            
+            char row = (char)((i_t & 0x20) >> 4) | (i_t & 0x01);
+            char column = (char)((i_t & 0x1e) >> 1);
+            int index = 16 * row + column;
+            SBOX_Faulty[i][index] = (SBOX_Faulty[i][index] + t) % 16;
+            
+            v |= ((ui64)i_t) << (48 - ((i+1) * 6));
+
             for (int j = 0; j < N; j++)
                 analysis[i][j] = 64;
         }
-        n_m += attack(inputs, 0xff, analysis);
+        ui64 q_no = attack(des, des_f, inputs, 0xff, analysis);
+        n_m[q_no]++;
+
         for (int l = 0; l < 8; l++)
             for (int m = 0; m < N; m++)
                 anal_avg_multi[l][m] += analysis[l][m];
     }
 
-    for (int l = 0; l < 8; l++)
+    float avg_s[8] = {0};
+    float avg_m = 0;
+
+    for (int m = 0; m < N; m++)
     {
-        n_s[l] /= NA;
-        for (int m = 0; m < N; m++)
+        avg_m += n_m[m] * (m+1);
+
+        for (int l = 0; l < 8; l++)
         {
+            avg_s[l] += n_s[l][m] * (m+1);
             anal_avg_single[l][m] /= NA;
             anal_avg_multi[l][m] /= NA;
         }
     }
-    n_m /= NA;
+    avg_m /= NA;
 
-    ofstream out1("Single.csv");
+    for (int l=0; l < 8; l++)
+        avg_s[l] /= NA;
+        
+
+    ofstream out1("KeySpace_Single.csv");
     for (auto &row : anal_avg_single)
     {
         for (auto col : row)
-            out1 << col << ',';
+            out1 << log2(col) << ',';
         out1 << '\n';
     }
 
-    ofstream out2("Multi.csv");
+    ofstream out2("KeySpace_Multi.csv");
     for (int i = 0; i < N; i++)
     {
         ui64 t = 1;
         for (int j = 0; j < 8; j++)
             t *= anal_avg_multi[j][i];
-        out2 << t << ',';
+        out2 << log2(t) << ',';
     }
 
-    cout << "\n\nFor single faults, number of inputs required: " << endl;
+    ofstream out3("NumberOfSolved_Single.csv");
+    for (auto &row : n_s)
+    {
+        ui64 t = 0;
+        for (auto col : row)
+        {
+            t += col;
+            out3 << t << ',';
+        }
+        out3 << '\n';
+    }
+
+    ofstream out4("NumberOfSolved_Multi.csv");
+    ui64 t = 0;
+    for (int i = 0; i < N; i++)
+    {
+        t += n_m[i]; 
+        out4 << t << ',';
+    }
+
+
+    cout << "\n\nFor single faults, average querys required: " << endl;
     for (int i = 0; i < 8; i++)
-        cout << "SBOX " << i + 1 << ": " << n_s[i] << endl;
-    cout << "For multiple faults, number of inputs required: " << n_m << endl;
+        cout << "SBOX " << i + 1 << ": " << avg_s[i] << endl;
+    cout << "For multiple faults, average queries required: " << avg_m << endl;
 
     return 0;
 }
