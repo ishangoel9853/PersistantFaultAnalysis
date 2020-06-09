@@ -9,7 +9,6 @@
 std::mt19937 rng;
 std::uniform_int_distribution<uint64_t> uni_dist(0x0ull, WORD_MASK);
 
-
 // Number of inputs
 #define N 500
 // Number of attacks
@@ -18,65 +17,8 @@ std::uniform_int_distribution<uint64_t> uni_dist(0x0ull, WORD_MASK);
 ui64 v = 0x0000000000000000ull; // 48 bit representation of faulty indices in 8 S-Boxes.
 ui8 L8_MASK = 0x80;
 
-char SBOX_Faulty[8][64] =
-{       
-    {
-        // S1
-        14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7,
-         0, 15,  7,  4, 14,  2, 13,  1, 10,  6, 12, 11,  9,  5,  3,  8,
-         4,  1, 14,  8, 13,  6,  2, 11, 15, 12,  9,  7,  3, 10,  5,  0,
-        15, 12,  8,  2,  4,  9,  1,  7,  5, 11,  3, 14, 10,  0,  6, 13
-    },
-    {
-        // S2
-        15,  1,  8, 14,  6, 11,  3,  4,  9,  7,  2, 13, 12,  0,  5, 10,
-         3, 13,  4,  7, 15,  2,  8, 14, 12,  0,  1, 10,  6,  9, 11,  5,
-         0, 14,  7, 11, 10,  4, 13,  1,  5,  8, 12,  6,  9,  3,  2, 15,
-        13,  8, 10,  1,  3, 15,  4,  2, 11,  6,  7, 12,  0,  5, 14,  9
-    },
-    {
-        // S3
-        10,  0,  9, 14,  6,  3, 15,  5,  1, 13, 12,  7, 11,  4,  2,  8,
-        13,  7,  0,  9,  3,  4,  6, 10,  2,  8,  5, 14, 12, 11, 15,  1,
-        13,  6,  4,  9,  8, 15,  3,  0, 11,  1,  2, 12,  5, 10, 14,  7,
-         1, 10, 13,  0,  6,  9,  8,  7,  4, 15, 14,  3, 11,  5,  2, 12
-    },
-    {
-        // S4
-         7, 13, 14,  3,  0,  6,  9, 10,  1,  2,  8,  5, 11, 12,  4, 15,
-        13,  8, 11,  5,  6, 15,  0,  3,  4,  7,  2, 12,  1, 10, 14,  9,
-        10,  6,  9,  0, 12, 11,  7, 13, 15,  1,  3, 14,  5,  2,  8,  4,
-         3, 15,  0,  6, 10,  1, 13,  8,  9,  4,  5, 11, 12,  7,  2, 14
-    },
-    {
-        // S5
-         2, 12,  4,  1,  7, 10, 11,  6,  8,  5,  3, 15, 13,  0, 14,  9,
-        14, 11,  2, 12,  4,  7, 13,  1,  5,  0, 15, 10,  3,  9,  8,  6,
-         4,  2,  1, 11, 10, 13,  7,  8, 15,  9, 12,  5,  6,  3,  0, 14,
-        11,  8, 12,  7,  1, 14,  2, 13,  6, 15,  0,  9, 10,  4,  5,  3
-    },
-    {
-        // S6
-        12,  1, 10, 15,  9,  2,  6,  8,  0, 13,  3,  4, 14,  7,  5, 11,
-        10, 15,  4,  2,  7, 12,  9,  5,  6,  1, 13, 14,  0, 11,  3,  8,
-         9, 14, 15,  5,  2,  8, 12,  3,  7,  0,  4, 10,  1, 13, 11,  6,
-         4,  3,  2, 12,  9,  5, 15, 10, 11, 14,  1,  7,  6,  0,  8, 13
-    },
-    {
-        // S7
-         4, 11,  2, 14, 15,  0,  8, 13,  3, 12,  9,  7,  5, 10,  6,  1,
-        13,  0, 11,  7,  4,  9,  1, 10, 14,  3,  5, 12,  2, 15,  8,  6,
-         1,  4, 11, 13, 12,  3,  7, 14, 10, 15,  6,  8,  0,  5,  9,  2,
-         6, 11, 13,  8,  1,  4, 10,  7,  9,  5,  0, 15, 14,  2,  3, 12
-    },
-    {
-        // S8
-        13,  2,  8,  4,  6, 15, 11,  1, 10,  9,  3, 14,  5,  0, 12,  7,
-         1, 15, 13,  8, 10,  3,  7,  4, 12,  5,  6, 11,  0, 14,  9,  2,
-         7, 11,  4,  1,  9, 12, 14,  2,  0,  6, 10, 13, 15,  3,  5,  8,
-         2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11
-    }
-};
+// Faulty SBOX values to used no the simulated attack
+char SBOX_Faulty[8][64];
 
 /**
 * Fault injected DES class Derived from "DES" class
@@ -126,13 +68,19 @@ ui64 DES_Faulty::des_Faulty(ui64 inp, bool mode)
     // 16 round Encryption
     for (ui8 i = 0; i < 16; i++)
     {
-        if (i != 15){
-            if(mode) F = des_func(Right, sub_key[15-i]);
-            else F = des_func(Right, sub_key[i]);
+        if (i != 15)
+        {
+            if (mode)
+                F = des_func(Right, sub_key[15 - i]);
+            else
+                F = des_func(Right, sub_key[i]);
         }
-        else{
-            if(mode) F = des_func_Faulty(Right, sub_key[15 - i]);
-            else F = des_func_Faulty(Right, sub_key[i]);
+        else
+        {
+            if (mode)
+                F = des_func_Faulty(Right, sub_key[15 - i]);
+            else
+                F = des_func_Faulty(Right, sub_key[i]);
         }
 
         feistel_round(Left, Right, F);
@@ -183,7 +131,7 @@ ui32 DES_Faulty::des_func_Faulty(ui32 Right, ui64 key) // des_func(Right,k) func
     return f_result;
 }
 
-
+// A function to print the binary form of a 64 bit integer
 int printBinary(ui64 n)
 {
     for (int i = 0; i < 64; i++)
@@ -194,14 +142,20 @@ int printBinary(ui64 n)
     return 0;
 }
 
+// Performs a multi fault PFA on the given des_f comparing with the correct ciphertext from des.
+// Faulty indices in SBOXs are given beforehand using mask and the remaining keyspace at each input will be stored in analysis.
+// Returns the input index at which the attack is completed.
 int attack(DES des, DES_Faulty des_f, ui64 inputs[N], ui8 mask, int analysis[8][N])
 {
-    ui64 recovered_key = 0x0000000000000000;
+    ui64 recovered_key = 0x0000000000000000;  // The recovered 48bit key from the attack
 
-    ui8 key_pos = 0x00; // Recovered key positions 6 bits at a time
-    vector<ui64> keyspace[8];
-    int n;
-    // Persistent Fault Analysis
+    ui8 key_pos = 0x00;  // Recovered key positions 6 bits at a time
+
+    vector<ui64> keyspace[8];  // Vectors of impossible keys for every SBOX
+
+    int n;  // Input index at which the attack is completed.
+
+    // Persistent Fault Analysis iterating over the given inputs
     for (int i = 0; i < N; i++)
     {
         ui64 result = des.encrypt(inputs[i]);
@@ -218,7 +172,7 @@ int attack(DES des, DES_Faulty des_f, ui64 inputs[N], ui8 mask, int analysis[8][
             before_fp_f |= (result_faulty >> (64 - IP[i])) & LB64_MASK;
         }
 
-        ui32 a = before_fp & L64_MASK;
+        ui32 a = before_fp & L64_MASK;  // Picking the last 32 bits of the permutaion inversed ciphertext
         // Applying expansion permutation to convert a to 48-bits
         ui64 a1 = 0;
         for (ui8 i = 0; i < 48; i++)
@@ -227,7 +181,9 @@ int attack(DES des, DES_Faulty des_f, ui64 inputs[N], ui8 mask, int analysis[8][
             a1 |= (ui64)((a >> (32 - EXPANSION[i])) & LB32_MASK);
         }
 
-        ui32 d_b1 = (before_fp ^ before_fp_f) >> 32;
+        ui32 d_b1 = (before_fp ^ before_fp_f) >> 32;  // Indicator of the difference of outputs from the round function
+
+        // Constant to reverse the straight d-box permutation in the round function
         static const char PBOXI[] =
             {
                 9, 17, 23, 31,
@@ -247,23 +203,30 @@ int attack(DES des, DES_Faulty des_f, ui64 inputs[N], ui8 mask, int analysis[8][
         }
         ui64 KEY_MASK = 0x0000fc0000000000;
         ui32 B_MASK = 0xf0000000;
+        // Iterating over every SBOX
         for (int j = 0; j < 8; j += 1)
         {
+            // Performing differing SBOX outputs, already discovered key, and checks of affected SBOX respectively
             if ((d_b & (B_MASK >> (j * 4))) && !(key_pos & (L8_MASK >> j)) && (mask & (L8_MASK >> j)))
             {
-                analysis[j][i] = 1;
-                recovered_key |= (KEY_MASK >> (j * 6)) & (a1 ^ v);
-                key_pos |= (L8_MASK >> j);
-                n = i;
+                analysis[j][i] = 1;  // The key is found
+                recovered_key |= (KEY_MASK >> (j * 6)) & (a1 ^ v);  // Recovered SBOX key appended to the master recovered_key
+                key_pos |= (L8_MASK >> j);  // Indicator of discovered key at SBOX
+                n = i;  // Input index of key recovery, always keeps the latest index in case of multiple faults
                 continue;
             }
+
+            // Update the remaining keyspace at each input
+            // Check for affected SBOX
             if (mask & (L8_MASK >> j))
             {
+                // Check if key is already found
                 if (analysis[j][((i == 0) ? 0 : (i - 1))] == 1)
                 {
                     analysis[j][i] = 1;
                     continue;
                 }
+                // Update the list of impossible keys
                 if (find(keyspace[j].begin(), keyspace[j].end(), (KEY_MASK >> (j * 6)) & (a1 ^ v)) == keyspace[j].end())
                 {
                     keyspace[j].push_back((KEY_MASK >> (j * 6)) & (a1 ^ v));
@@ -273,6 +236,7 @@ int attack(DES des, DES_Faulty des_f, ui64 inputs[N], ui8 mask, int analysis[8][
         }
     }
 
+    // Check if all faulty SBOX keys are recovered
     if (key_pos ^ mask)
         cout << "The full key has not been recovered. Please add more ciphertexts." << endl;
 
@@ -286,7 +250,7 @@ int main()
     // The Average Key space left after the queries
     ui64 anal_avg_single[8][N];
     ui64 anal_avg_multi[8][N];
-    
+
     // Number of query at which we get the successful hit
     ui64 n_s[8][N];
     ui64 n_m[N];
@@ -300,17 +264,18 @@ int main()
             n_m[j] = 0;
         }
 
-
+    // Performing the attak NA times
     for (int a = 0; a < NA; a++)
     {
         // THE 56 BIT KEY
         ui64 key = uni_dist(rng) & 0xffffffffffffffull;
         DES des(key);
         DES_Faulty des_f(key);
-        // Reset All Faulty SBOX
-        for (int i=0;i<8;i++)
+
+        // Reset All Faulty SBOXs
+        for (int i = 0; i < 8; i++)
         {
-            for(int j=0;j<64;j++)
+            for (int j = 0; j < 64; j++)
             {
                 SBOX_Faulty[i][j] = SBOX[i][j];
             }
@@ -319,6 +284,7 @@ int main()
         cout << "\n\n************************************ ATTACK " << a + 1 << " ************************************\n\n"
              << endl;
         ui64 inputs[N];
+        // Assigning random 64 bit inputs
         for (int i = 0; i < N; i++)
         {
             inputs[i] = uni_dist(rng);
@@ -326,7 +292,8 @@ int main()
 
         int analysis[8][N];
 
-        cout<<"Key:";
+        // The key under attack 
+        cout << "Key:";
         printBinary(des_f.last_subkey());
         // For all possible single faults
         cout << "Single Faults--------------------------------------------------------------------" << endl;
@@ -342,15 +309,15 @@ int main()
 
             char row = (char)((i_t & 0x20) >> 4) | (i_t & 0x01);
             char column = (char)((i_t & 0x1e) >> 1);
-            int index = 16 * row + column;
-            SBOX_Faulty[i][index] = (SBOX_Faulty[i][index] + t) % 16;
-            
-            v = ((ui64)i_t) << (48 - ((i+1) * 6));
-            
-            ui64 q_no = attack(des, des_f, inputs, L8_MASK >> i, analysis);
+            int index = 16 * row + column;  // Random index
+            SBOX_Faulty[i][index] = (SBOX_Faulty[i][index] + t) % 16;  // Introducing a random fault in a random index of ith SBOX
+
+            v = ((ui64)i_t) << (48 - ((i + 1) * 6));  // Updating location of faulty index
+
+            ui64 q_no = attack(des, des_f, inputs, L8_MASK >> i, analysis);  // Performing the attack
             n_s[i][q_no]++;
 
-            SBOX_Faulty[i][index] = (SBOX_Faulty[i][index] - t + 16) % 16;
+            SBOX_Faulty[i][index] = (SBOX_Faulty[i][index] - t + 16) % 16;  // Resetting the fault
         }
         for (int l = 0; l < 8; l++)
             for (int m = 0; m < N; m++)
@@ -364,18 +331,18 @@ int main()
             int i_t = uni_dist(rng) % 64;
             i_t = 63;
             int t = uni_dist(rng) % 5 + 1;
-            
+
             char row = (char)((i_t & 0x20) >> 4) | (i_t & 0x01);
             char column = (char)((i_t & 0x1e) >> 1);
-            int index = 16 * row + column;
-            SBOX_Faulty[i][index] = (SBOX_Faulty[i][index] + t) % 16;
-            
-            v |= ((ui64)i_t) << (48 - ((i+1) * 6));
+            int index = 16 * row + column;  // Random index
+            SBOX_Faulty[i][index] = (SBOX_Faulty[i][index] + t) % 16;  // Introducing a random fault in a random index of ith SBOX
+
+            v |= ((ui64)i_t) << (48 - ((i + 1) * 6));  // Updating location of faulty index
 
             for (int j = 0; j < N; j++)
                 analysis[i][j] = 64;
         }
-        ui64 q_no = attack(des, des_f, inputs, 0xff, analysis);
+        ui64 q_no = attack(des, des_f, inputs, 0xff, analysis);  //  Performing the attack
         n_m[q_no]++;
 
         for (int l = 0; l < 8; l++)
@@ -383,26 +350,29 @@ int main()
                 anal_avg_multi[l][m] += analysis[l][m];
     }
 
+    // Average number of inputs for single faults
     float avg_s[8] = {0};
+    // Average number of inputs for multiple faults
     float avg_m = 0;
 
+    // Averaging analysis over all attacks 
     for (int m = 0; m < N; m++)
     {
-        avg_m += n_m[m] * (m+1);
+        avg_m += n_m[m] * (m + 1);
 
         for (int l = 0; l < 8; l++)
         {
-            avg_s[l] += n_s[l][m] * (m+1);
+            avg_s[l] += n_s[l][m] * (m + 1);
             anal_avg_single[l][m] /= NA;
             anal_avg_multi[l][m] /= NA;
         }
     }
     avg_m /= NA;
 
-    for (int l=0; l < 8; l++)
+    for (int l = 0; l < 8; l++)
         avg_s[l] /= NA;
-        
 
+    // Exporting analysis of remaining keyspace at each input to a .csv file for single faults
     ofstream out1("KeySpace_Single.csv");
     for (auto &row : anal_avg_single)
     {
@@ -411,6 +381,7 @@ int main()
         out1 << '\n';
     }
 
+    // Exporting analysis of remaining keyspace at each input to a .csv file for multiple faults
     ofstream out2("KeySpace_Multi.csv");
     for (int i = 0; i < N; i++)
     {
@@ -420,6 +391,7 @@ int main()
         out2 << log2(t) << ',';
     }
 
+    // Exporting analysis of completed attacks at each input index to a .csv file for single faults
     ofstream out3("NumberOfSolved_Single.csv");
     for (auto &row : n_s)
     {
@@ -432,14 +404,14 @@ int main()
         out3 << '\n';
     }
 
+    // Exporting analysis of completed attacks at each input index to a .csv file for multiple faults
     ofstream out4("NumberOfSolved_Multi.csv");
     ui64 t = 0;
     for (int i = 0; i < N; i++)
     {
-        t += n_m[i]; 
+        t += n_m[i];
         out4 << t << ',';
     }
-
 
     cout << "\n\nFor single faults, average querys required: " << endl;
     for (int i = 0; i < 8; i++)
