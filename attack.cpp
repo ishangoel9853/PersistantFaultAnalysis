@@ -78,6 +78,15 @@ char SBOX_Faulty[8][64] =
     }
 };
 
+/**
+* Fault injected DES class Derived from "DES" class
+* Contains the functions for Faulty DES Encryption using a user defined key.
+* 
+* DES_Faulty(ui64 key)                      DES_Faulty Constructor
+* des_Faulty(ui64 inp, bool mode)           Driver function for faulty DES Encryption (Mode: True-Decryption False-Encryption)
+* encrypt_Faulty(ui64 inp)                  Faulty DES encryption function(encrypt inp with key "key")
+* des_func_Faulty(ui32 Right, ui64 key)     Function "f" that uses the faulty SBOX values
+*/
 class DES_Faulty : public DES
 {
 public:

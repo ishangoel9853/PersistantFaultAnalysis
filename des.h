@@ -165,22 +165,36 @@ static const char PBOX[] =
 // ------------------------------------------------------------------------
 
 
-//Defining standart(Fault-free) DES class
+/**
+* Standart(Fault-free) DES class
+* Contains the functions for DES Encryption and decryption using a user defined key.
+* 
+* DES(ui64 key)                             DES Constructor
+* des(ui64 inp, bool mode)                  Driver function for DES Encryption (Mode: True-Decryption False-Encryption)
+* encrypt(ui64 inp)                         DES encryption function(encrypt inp with object key)
+* decrypt(ui64 inp)                         DES decryption function(encrypt inp with object key)
+* key_gen(ui64 key)                         DES key generation algorithm
+* i_perm(ui64 inp)                          Initial Permutation Function
+* f_perm(ui64 inp)                          Final Permutation Function
+* feistel_round(ui32 &Left, ui32 &Right, ui32 F)         Basic Fiestel Round
+* des_func(ui32 Right, ui64 key)            Function "f" 
+* sub_key[16]                               Round Keys generated from key_gen algo (48 bits each)
+*/
 class DES
 {
 public:
-    DES(ui64 key);                                  // DES Constructor
-    ui64 des(ui64 inp, bool mode);                  //Driver function for DES Encryption (Mode: True-Decryption False-Encryption)
-    ui64 encrypt(ui64 inp);                         // DES encryption function(encrypt inp with object key)
-    ui64 decrypt(ui64 inp);                         // DES decryption function(encrypt inp with object key)
+    DES(ui64 key);                                  
+    ui64 des(ui64 inp, bool mode);                  
+    ui64 encrypt(ui64 inp);                         
+    ui64 decrypt(ui64 inp);                         
 
 protected:
-    void key_gen(ui64 key);                         //DES key generation algorithm
-    ui64 i_perm(ui64 inp);                          //Initial Permutation Function
-    ui64 f_perm(ui64 inp);                          //Final Permutation Function
-    void feistel_round(ui32 &Left, ui32 &Right, ui32 F);         //Basic Fiestel Round
-    ui32 des_func(ui32 Right, ui64 key);            //Function "f" 
-    ui64 sub_key[16];                               //Round Keys generated from key_gen algo (48 bits each)              
+    void key_gen(ui64 key);                         
+    ui64 i_perm(ui64 inp);                          
+    ui64 f_perm(ui64 inp);                          
+    void feistel_round(ui32 &Left, ui32 &Right, ui32 F);         
+    ui32 des_func(ui32 Right, ui64 key);             
+    ui64 sub_key[16];                                             
 };
 
 
