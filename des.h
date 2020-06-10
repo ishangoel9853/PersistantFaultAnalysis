@@ -173,7 +173,6 @@ protected:
 };
 
 //-----------------------------------------------------------------------
-//#pragma GCC push_options
 #pragma GCC optimize("unroll-loops") //Parallel execution of loops
 
 //-----------------KEY GENERATION-----------------------------
