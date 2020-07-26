@@ -28,11 +28,9 @@ Change them to change the attack analysis accordingly
 
 The program generates 4 output files which are all csv (comma seperated values):
 1) NumberOfSolved_Single.csv:
-
 It represents the number of attacks which has successfully completed till a particular query number. The file contains 8 rows for attacking each S-Box. Each row contains N values each representing the number of completed attack till the ith query.
 
 2) NumberOfSolved_Multi.csv:
-
 It represents the number of attacks which has successfully completed till a particular query number. The file contains 1 row which is attacking all S-Box together. The row contains N values each representing the number of completed attack till the ith query.
 
 3) KeySpace_Single.csv:
